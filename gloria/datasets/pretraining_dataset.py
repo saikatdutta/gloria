@@ -33,8 +33,11 @@ class MultimodalPretrainingDataset(data.Dataset):
         # read CheXpert csv file
         csv_path = os.path.join(CHEXPERT_DATA_DIR, CHEXPERT_MASTER_CSV)
         self.df = pd.read_csv(csv_path)
+        # self.df[CHEXPERT_PATH_COL] = self.df[CHEXPERT_PATH_COL].apply(
+        #     lambda x: os.path.join(CHEXPERT_DATA_DIR, "/".join(x.split("/")[1:]))
+        # )
         self.df[CHEXPERT_PATH_COL] = self.df[CHEXPERT_PATH_COL].apply(
-            lambda x: os.path.join(CHEXPERT_DATA_DIR, "/".join(x.split("/")[1:]))
+            lambda x: os.path.join(CHEXPERT_DATA_DIR, x)
         )
         self.df = self.df[self.df[CHEXPERT_VIEW_COL] == "Frontal"]
 

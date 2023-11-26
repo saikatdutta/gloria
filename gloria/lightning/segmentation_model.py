@@ -9,6 +9,7 @@ import segmentation_models_pytorch as smp
 from pytorch_lightning.core import LightningModule
 from .. import builder
 from .. import gloria
+from .. import models
 
 
 class SegmentationModel(LightningModule):
@@ -24,9 +25,21 @@ class SegmentationModel(LightningModule):
         self.dm = None
 
         if self.cfg.model.vision.model_name in gloria.available_models():
-            self.model = gloria.load_img_segmentation_model(
-                self.cfg.model.vision.model_name
-            )
+            # self.model = gloria.load_img_segmentation_model(
+            #     self.cfg.model.vision.model_name
+            # )
+            self.model = models.unet_mod.ResnetUNet(cfg) #changed
+            
+            ckpt_path = 'data/ckpt/gloria_pretrain_trial_1_1.0/2023_11_23_10_53_14/epoch=16-step=13769.ckpt'
+            ckpt = torch.load(ckpt_path)
+            ckpt_dict = {}
+            for k, v in ckpt["state_dict"].items():
+                if k.startswith("gloria.img_encoder.model"):
+                    k = ".".join(k.split(".")[3:])
+                    ckpt_dict[k] = v
+            msg = self.model.encoder.load_state_dict(ckpt_dict, strict=False)
+            print (msg)
+
         else:
             self.model = smp.Unet("resnet50", encoder_weights=None, activation=None)
 

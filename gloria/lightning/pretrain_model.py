@@ -23,6 +23,7 @@ class PretrainModel(LightningModule):
         optimizer = builder.build_optimizer(self.cfg, self.lr, self.gloria)
         scheduler = builder.build_scheduler(self.cfg, optimizer, self.dm)
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
+        # return [optimizer] , [scheduler]
 
     def training_step(self, batch, batch_idx):
         loss, attn_maps, sents = self.shared_step(batch, "train")

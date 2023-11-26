@@ -24,7 +24,8 @@ _MODELS = {
 
 
 _SEGMENTATION_MODELS = {
-    "gloria_resnet50": "./pretrained/chexpert_resnet50.ckpt",
+    # "gloria_resnet50": "./pretrained/chexpert_resnet50.ckpt",
+     "gloria_resnet50": "./data/ckpt/gloria_pretrain_trial_1_1.0/2023_11_22_22_52_17/epoch=14-step=12149.ckpt"  # changed !
 }
 
 
@@ -78,7 +79,7 @@ def load_gloria(
             + " and copy it to the ./pretrained folder."
         )
 
-    ckpt = torch.load(ckpt_path)
+    ckpt = torch.load(ckpt_path, map_location= device)
     cfg = ckpt["hyper_parameters"]
     ckpt_dict = ckpt["state_dict"]
 
@@ -89,7 +90,7 @@ def load_gloria(
     ckpt_dict = fixed_ckpt_dict
 
     gloria_model = builder.build_gloria_model(cfg).to(device)
-    gloria_model.load_state_dict(ckpt_dict)
+    gloria_model.load_state_dict(ckpt_dict, strict=False)
 
     return gloria_model
 
@@ -265,8 +266,11 @@ def zero_shot_classification(gloria_model, imgs, cls_txt_mapping):
         class_similarities.append(cls_similarity)
     class_similarities = np.stack(class_similarities, axis=1)
 
+    # print (class_similarities.shape)
+
     # normalize across class
     if class_similarities.shape[0] > 1:
+        # print ('similarities normalized')
         class_similarities = utils.normalize(class_similarities)
     class_similarities = pd.DataFrame(
         class_similarities, columns=cls_txt_mapping.keys()
@@ -274,6 +278,35 @@ def zero_shot_classification(gloria_model, imgs, cls_txt_mapping):
 
     return class_similarities
 
+def zero_shot_classification_no_norm(gloria_model, imgs, cls_txt_mapping):
+    """Load a GLoRIA pretrained classification model
+
+    Parameters
+    ----------
+    gloria_model : str
+        GLoRIA model, load via gloria.load_models()
+    imgs:
+        processed images using gloria_model.process_img
+    cls_txt_mapping:
+        dictionary of class to processed text mapping. Each class can have more than one associated text
+
+    Returns
+    -------
+    cls_similarities :
+        similartitie between each imgs and text
+    """
+
+    # get similarities for each class
+    class_similarities = []
+    for cls_name, cls_txt in cls_txt_mapping.items():
+        similarities = get_similarities(
+            gloria_model, imgs, cls_txt, similarity_type="both"
+        )
+        cls_similarity = similarities.max(axis=1)  # average between class prompts
+        class_similarities.append(cls_similarity)
+    class_similarities = np.stack(class_similarities, axis=1)
+
+    return class_similarities
 
 def generate_chexpert_class_prompts(n: int = 5):
     """Generate text prompts for each CheXpert classification task
@@ -302,5 +335,8 @@ def generate_chexpert_class_prompts(n: int = 5):
                 for k2 in v[keys[2]]:
                     cls_prompts.append(f"{k0} {k1} {k2}")
 
+        # print (len(cls_prompts))
         prompts[k] = random.sample(cls_prompts, n)
+        # prompts[k] = cls_prompts
+
     return prompts

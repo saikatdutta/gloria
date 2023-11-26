@@ -41,11 +41,17 @@ class GLoRIA(nn.Module):
         return text_emb_l, text_emb_g, sents
 
     def image_encoder_forward(self, imgs):
+        # print(f'imgs shape: {imgs.shape}')
         img_feat_g, img_emb_l = self.img_encoder(imgs, get_local=True)
+        
+        # print(f'encoded shape: {img_feat_g.shape}, {img_emb_l.shape}')
+
         img_emb_g, img_emb_l = self.img_encoder.generate_embeddings(
             img_feat_g, img_emb_l
         )
 
+        # print(f'embedded shape: {img_feat_g.shape}, {img_emb_l.shape}')
+        # print ("===")
         return img_emb_l, img_emb_g
 
     def _calc_local_loss(self, img_emb_l, text_emb_l, sents):
@@ -104,6 +110,7 @@ class GLoRIA(nn.Module):
 
         batch_size = img_emb_l.shape[0]
         similarities = []
+        # print (text_emb_l.shape)
 
         for i in range(len(text_emb_l)):
             words_num = cap_lens[i]

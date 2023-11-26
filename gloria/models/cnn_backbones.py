@@ -1,5 +1,7 @@
 import torch.nn as nn
 from torchvision import models as models_2d
+from transformers import AutoImageProcessor, ViTHybridForImageClassification, SwinModel
+
 
 
 class Identity(nn.Module):
@@ -78,3 +80,22 @@ def resnext_100(pretrained=True):
     feature_dims = model.fc.in_features
     model.fc = Identity()
     return model, feature_dims, None
+
+
+
+def vit_hybrid(pretrained=True):
+    model = ViTHybridForImageClassification.from_pretrained("google/vit-hybrid-base-bit-384")
+    model.classifier = nn.Identity()
+
+    
+    return model, 768, 1024
+
+def swin(pretrained=True):
+    model = model = SwinModel.from_pretrained("microsoft/swin-base-patch4-window12-384")
+
+    return model, 1024, 1024
+
+def swin2(pretrained=True):
+    model = model = SwinModel.from_pretrained("microsoft/swin-base-patch4-window12-384")
+
+    return model, 1024, 512

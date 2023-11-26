@@ -1,7 +1,11 @@
 from pathlib import Path
 
 # CheXpert constants
-CHEXPERT_DATA_DIR = Path("/home/mars/git/embeddingx_v2/data/chexpert/CheXpert-v1.0")
+# CHEXPERT_DATA_DIR = Path("/home/mars/git/embeddingx_v2/data/chexpert/CheXpert-v1.0")
+# CHEXPERT_DATA_DIR = Path("/raid/biplab/phduser1/saikat/ADL_project/mimic_cxr_jpg/physionet.org/files/mimic-cxr-jpg/2.0.0/files/p10/")
+CHEXPERT_DATA_DIR = Path("/raid/biplab/phduser1/saikat/ADL_project/mimic_cxr_jpg/physionet.org/files/mimic-cxr-jpg/2.0.0/files/")
+
+
 CHEXPERT_ORIGINAL_TRAIN_CSV = CHEXPERT_DATA_DIR / "train.csv"
 CHEXPERT_TRAIN_CSV = CHEXPERT_DATA_DIR / "train_split.csv"  # train split from train.csv
 CHEXPERT_VALID_CSV = CHEXPERT_DATA_DIR / "valid_split.csv"  # valid split from train.csv
@@ -55,7 +59,7 @@ CHEXPERT_UNCERTAIN_MAPPINGS = {
 }
 
 # SIIM Pneumothorax
-PNEUMOTHORAX_DATA_DIR = Path("/data4/siim")
+PNEUMOTHORAX_DATA_DIR = Path("/raid/biplab/phduser1/saikat/ADL_project/siim_acr")
 PNEUMOTHORAX_ORIGINAL_TRAIN_CSV = PNEUMOTHORAX_DATA_DIR / "train-rle.csv"
 PNEUMOTHORAX_TRAIN_CSV = PNEUMOTHORAX_DATA_DIR / "train.csv"
 PNEUMOTHORAX_VALID_CSV = PNEUMOTHORAX_DATA_DIR / "valid.csv"

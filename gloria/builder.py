@@ -6,7 +6,7 @@ from . import models
 from . import lightning
 from . import datasets
 from . import loss
-
+import sys
 
 def build_data_module(cfg):
     if cfg.phase.lower() == "pretrain":
@@ -94,7 +94,8 @@ def build_scheduler(cfg, optimizer, dm=None):
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda_lr)
     elif cfg.train.scheduler.name == "cos":
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
+        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20, verbose = True)             # changed !! 
     elif cfg.train.scheduler.name == "plateau":
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, factor=0.5, patience=5
@@ -106,7 +107,10 @@ def build_scheduler(cfg, optimizer, dm=None):
 
     if cfg.lightning.trainer.val_check_interval is not None:
         cfg.train.scheduler.interval = "step"
-        num_iter = len(dm.train_dataloader().dataset)
+        # num_iter = len(dm.train_dataloader().dataset)
+        num_iter = len(dm.train_dataloader())
+        # print (num_iter)
+        # sys.exit()
         if type(cfg.lightning.trainer.val_check_interval) == float:
             frequency = int(num_iter * cfg.lightning.trainer.val_check_interval)
             cfg.train.scheduler.frequency = frequency
@@ -119,6 +123,15 @@ def build_scheduler(cfg, optimizer, dm=None):
         "interval": cfg.train.scheduler.interval,
         "frequency": cfg.train.scheduler.frequency,
     }
+
+    # scheduler = {
+    #     "scheduler": scheduler,
+    #     "monitor": cfg.train.scheduler.monitor,
+    #     "interval": 'step',
+    #     "frequency": 1,
+    # }
+
+    print (scheduler)
 
     return scheduler
 
@@ -150,27 +163,27 @@ def build_transformation(cfg, split):
         if cfg.transforms.random_crop is not None:
             t.append(transforms.RandomCrop(cfg.transforms.random_crop.crop_size))
 
-        if cfg.transforms.random_horizontal_flip is not None:
-            t.append(
-                transforms.RandomHorizontalFlip(p=cfg.transforms.random_horizontal_flip)
-            )
+        # if cfg.transforms.random_horizontal_flip is not None:
+        #     t.append(
+        #         transforms.RandomHorizontalFlip(p=cfg.transforms.random_horizontal_flip)
+        #     )
 
-        if cfg.transforms.random_affine is not None:
-            t.append(
-                transforms.RandomAffine(
-                    cfg.transforms.random_affine.degrees,
-                    translate=[*cfg.transforms.random_affine.translate],
-                    scale=[*cfg.transforms.random_affine.scale],
-                )
-            )
+        # if cfg.transforms.random_affine is not None:
+        #     t.append(
+        #         transforms.RandomAffine(
+        #             cfg.transforms.random_affine.degrees,
+        #             translate=[*cfg.transforms.random_affine.translate],
+        #             scale=[*cfg.transforms.random_affine.scale],
+        #         )
+        #     )
 
-        if cfg.transforms.color_jitter is not None:
-            t.append(
-                transforms.ColorJitter(
-                    brightness=[*cfg.transforms.color_jitter.bightness],
-                    contrast=[*cfg.transforms.color_jitter.contrast],
-                )
-            )
+        # if cfg.transforms.color_jitter is not None:
+        #     t.append(
+        #         transforms.ColorJitter(
+        #             brightness=[*cfg.transforms.color_jitter.bightness],
+        #             contrast=[*cfg.transforms.color_jitter.contrast],
+        #         )
+        #     )
     else:
         if cfg.transforms.random_crop is not None:
             t.append(transforms.CenterCrop(cfg.transforms.random_crop.crop_size))

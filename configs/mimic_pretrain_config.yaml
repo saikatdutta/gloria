@@ -1,15 +1,13 @@
 experiment_name: 'gloria_pretrain'
-trial_name: 'trial_1'
 phase: 'pretrain'
 
 lightning:
     trainer:
-       gpus: '0'
+       gpus: '1'
        max_epochs: 50
        distributed_backend: 'dp'
        gradient_clip_val: 0.25
        lr: 0.00005
-    #    lr: 0.00002
        precision: 16
     checkpoint_callback:
         monitor: 'val_loss'
@@ -74,5 +72,5 @@ train:
     scheduler: 
         name: 'plateau'
         monitor: 'val_loss'
-        interval: 'epoch'       # fixed typo
+        inerval: 'epoch'
         frequency: 1

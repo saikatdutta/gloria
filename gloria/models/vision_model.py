@@ -4,8 +4,17 @@ import torch.nn as nn
 
 from . import cnn_backbones
 from omegaconf import OmegaConf
+import torch.nn.functional as F
 
+def get_vit_features(name):
+    def hook(model, input, output):
+        vit_features[name] = output #.detach()
+    return hook
 
+def get_swin_features(name):
+    def hook(model, input, output):
+        swin_features[name] = output #.detach()
+    return hook
 
 class ImageEncoder(nn.Module):
     def __init__(self, cfg):
@@ -17,6 +26,8 @@ class ImageEncoder(nn.Module):
         self.model, self.feature_dim, self.interm_feature_dim = model_function(
             pretrained=cfg.model.vision.pretrained
         )
+
+        self.cfg = cfg
 
         self.global_embedder = nn.Linear(self.feature_dim, self.output_dim)
         self.local_embedder = nn.Conv2d(
@@ -34,13 +45,32 @@ class ImageEncoder(nn.Module):
             print("Freezing CNN model")
             for param in self.model.parameters():
                 param.requires_grad = False
+                
+        if "vit_hybrid" in self.cfg.model.vision.model_name:
+            backbone_handle = \
+                self.model.vit.embeddings.patch_embeddings.backbone.register_forward_hook(get_vit_features('backbone_feats'))
+        elif "swin" == self.cfg.model.vision.model_name:
+            backbone_handle = \
+                self.model.encoder.layers[2].register_forward_hook(get_swin_features('l2_feats'))
+        elif "swin2" == self.cfg.model.vision.model_name:
+            backbone_handle = \
+                self.model.encoder.layers[1].register_forward_hook(get_swin_features('l1_feats'))    
 
     def forward(self, x, get_local=False):
         # --> fixed-size input: batch x 3 x 299 x 299
-        if "resnet" or "resnext" in self.cfg.model.vision.model_name:
+
+        #print (self.cfg.model.vision.model_name)
+
+        if "resnet" in self.cfg.model.vision.model_name or "resnext" in self.cfg.model.vision.model_name:
             global_ft, local_ft = self.resnet_forward(x, extract_features=True)
         elif "densenet" in self.cfg.model.vision.model_name:
             global_ft, local_ft = self.dense_forward(x, extract_features=True)
+        elif "vit_hybrid" in self.cfg.model.vision.model_name:
+            global_ft, local_ft = self.vit_hybrid_forward(x)
+        elif "swin" == self.cfg.model.vision.model_name:
+            global_ft, local_ft = self.swin_forward(x)
+        elif "swin2" == self.cfg.model.vision.model_name:
+            global_ft, local_ft = self.swin2_forward(x)
 
         if get_local:
             return global_ft, local_ft
@@ -74,6 +104,53 @@ class ImageEncoder(nn.Module):
         x = x.view(x.size(0), -1)
 
         return x, local_features
+    
+    def vit_hybrid_forward(self, x):
+        x = nn.Upsample(size=(384, 384), mode="bilinear", align_corners=True)(x)
+
+        global vit_features
+        vit_features = {}
+        
+        y = self.model(x)
+
+        local_features = vit_features['backbone_feats']['feature_maps'][0]
+        local_features = F.interpolate(local_features, (19,19))
+        global_features = y['logits']
+
+        return global_features, local_features
+
+    def swin_forward(self, x):
+        x = nn.Upsample(size=(384, 384), mode="bilinear", align_corners=True)(x)
+
+        global swin_features
+        swin_features = {}
+        
+        y = self.model(x)
+
+        local_features = swin_features['l2_feats'][0]
+        local_features = torch.reshape(local_features.permute(0,2,1), (-1, 1024 , 12,12))
+        local_features = F.interpolate(local_features, (19,19))
+
+        global_features = y['pooler_output']
+
+        return global_features, local_features
+    
+
+    def swin2_forward(self, x):
+        x = nn.Upsample(size=(384, 384), mode="bilinear", align_corners=True)(x)
+
+        global swin_features
+        swin_features = {}
+        
+        y = self.model(x)
+
+        local_features = swin_features['l1_feats'][0]
+        local_features = torch.reshape(local_features.permute(0,2,1), (-1, 512 , 24,24))
+        local_features = F.interpolate(local_features, (19,19))
+
+        global_features = y['pooler_output']
+
+        return global_features, local_features
 
     def densenet_forward(self, x, extract_features=False):
         pass

@@ -1,5 +1,6 @@
 experiment_name: 'pneumothorax_segmentation'
 phase: 'segmentation'
+trial_name: 'trial_seg'
 
 lightning:
     trainer:
@@ -39,6 +40,8 @@ data:
 
 transforms:
     norm: 'half'
+    random_crop:
+        crop_size: 512
 
 train:
     batch_size: 8

@@ -37,7 +37,7 @@ model:
         temp2: 5.0
         temp3: 10.0
     vision:
-        model_name: 'resnet_50'
+        model_name: 'swin'
         freeze_cnn: false
         pretrained: true
     text:  
@@ -74,5 +74,5 @@ train:
     scheduler: 
         name: 'plateau'
         monitor: 'val_loss'
-        interval: 'epoch'       # fixed typo
+        interval: 'epoch'
         frequency: 1

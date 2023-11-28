@@ -7,6 +7,12 @@ GLoRIA (**G**lobal-**Lo**cal **R**epresentations for **I**mages using **A**tteni
 > Stanford University <br>
 > Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV), 2021 <br>
 
+---
+
+**[GNR650 Course Project]** Pretrained model checkpoints are available here: [Drive link](https://drive.google.com/drive/folders/1YvYRwNT_kuDcJAQ6eaV7hGeY6sGEdFh9?usp=sharing)
+
+---
+
 ## Approach
 ![GLoRIA](GLoRIA.png)
 
